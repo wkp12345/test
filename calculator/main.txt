@@ -8,6 +8,7 @@ import android.widget.EditText;  //引用文本编辑框组件
 import android.text.TextUtils;  //TextUtils类用于处理字符串
 import android.widget.Toast;
 
+import java.math.BigDecimal;
 import java.util.LinkedList;
 import java.util.Stack;
 
@@ -40,8 +41,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         //分别获取按钮的内容至文本编辑框
         switch (v.getId()) {
             case R.id.bt_num0:
-                if (lastOperators.equals(")")) { return; }
-                et_calc.setText(et_calc.getText() + "0");
+                if (lastOperators.equals(")")) { return; }  //右括号后面不能输入数
+                et_calc.setText(et_calc.getText() + "0");  //更新上一次输入不是运算符
                 lastIsOperator = false;
                 break;
             case R.id.bt_num1:
@@ -90,18 +91,18 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 lastIsOperator = false;
                 break;
             case R.id.bt_dot:
-                if (lastOperators.equals(")")||currentText.equals("")) { return; }
-                boolean dot = false;
-                String s1;
+                if (lastOperators.equals(")")||currentText.equals("")) { return; } //右括号或者文本框为空不能输入小数点
+                boolean dot = false;  //记录是否输入小数点
+                String s1;        //要加上小数点的数
                 if (!lastOperators.equals("")) {  //如果上一次运算符不为空
                     index = currentText.lastIndexOf(lastOperators);  //得到上一次运算符在字符串中的位置
-                    s1 = currentText.substring(index + 1);      //然后截取上一运算符之后的字符串
+                    s1 = currentText.substring(index + 1);      //然后截取上一运算符之后的字符串得到该数
                 } else {
-                    s1 = currentText;
+                    s1 = currentText;  //如果运算符为空则得到文本框中的数
                 }
                 for (int i = 0; i < s1.length(); i++) { //遍历字符串看看有没有小数点
                     if (s1.charAt(i) == '.') {
-                        dot = true;
+                        dot = true;  //该数已经存在小数点
                     }
                 }
                 if (dot) {  //有小数点就不能在加小数点了
@@ -110,34 +111,46 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     if (lastIsOperator) { //运算符后面不能小数点
                         return;
                     }
-                    et_calc.setText(et_calc.getText() + ".");
+                    et_calc.setText(et_calc.getText() + ".");  //该数中没有小数点就可以加上小数点
                 }
                 break;
             //归零按钮，将当前操作数直接清零
             case R.id.bt_clear:
-                et_calc.setText("");
-                lastIsOperator=true;
-                lastOperators="";
-                left=0;
-                infix.clear();
-                postfix.clear();
+                et_calc.setText("");  //文本框清空
+                lastIsOperator=true;  //设置上一次输入的为运算符，因为空的时候不能输入运算符
+                lastOperators="";     //设置上一个运算符为空
+                left=0;           //左括号数量为0
+                infix.clear();   //中缀表达式清空
+                postfix.clear();  //后缀表达式清空
                 break;
             //清除按钮，若当前文本编辑框内容为空，点击一次则删除一个字符串
             case R.id.bt_delete:
-                if (TextUtils.isEmpty(et_calc.getText())) {
-                    return;
-                }
-                char ch=currentText.charAt(currentText.length()-1);
-                String s="+-*/√)";
+                if (TextUtils.isEmpty(et_calc.getText())) { return; } //文本框为空直接返回
+                char ch=currentText.charAt(currentText.length()-1);  //得到将要清除的字符
+                String s="+-*/√)";   //运算符集合
                 for(int i=0;i<5;i++){
-                    if(s.charAt(i)==ch){
-                        infix.removeLast();
-                        infix.removeLast();
+                    if(s.charAt(i)==ch){  //如果该字符是运算符
+                        infix.removeLast();  //则在中缀表达式中清除该字符
+                        infix.removeLast();  //并清除该字符前面的数
                         break;
                     }
                 }
-                lastOperators=infix.getLast();
-                et_calc.setText(currentText.substring(0, currentText.length() - 1).length() > 0 ? currentText.substring(0, currentText.length() - 1) : "0");
+                if(!infix.isEmpty()){    //根据中缀表达式中的最后一个运算符更新lastOperators
+                    lastOperators=infix.getLast();
+                }else {
+                    lastOperators="";
+                }
+                et_calc.setText(currentText.substring(0, currentText.length() - 1).length() > 0 ? currentText.substring(0, currentText.length() - 1) : "");//更新文本框
+                if(et_calc.getText().length()>0){
+                    ch=et_calc.getText().charAt(et_calc.getText().length()-1);  //根据最后一位更新lastIsOperator
+                    if((ch+"").equals(lastOperators)){
+                        lastIsOperator=true;
+                    }else{
+                        lastIsOperator=false;
+                    }
+                }else{
+                    lastIsOperator=true;
+                }
                 break;
             //计算按钮，若当前内容非空、或者以及上一次有操作记录且记录不是”=”的情况下，将当前的操作记录设置为+/-、√、+、-、*、/、=
             case R.id.bt_sgn:
@@ -162,10 +175,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 if (!lastIsOperator) {   //上一次输入的不是数才能输左括号
                     return;
                 }
-                lastIsOperator=true;
-                et_calc.setText(et_calc.getText()+"(");
-                infix.add("(");
-                left++;
+                lastIsOperator=true;  //更新上一次输入的为运算符
+                et_calc.setText(et_calc.getText()+"("); //更新文本框显示
+                infix.add("(");  //加入中缀表达式
+                left++;    //记录左括号的数量
                 lastOperators="(";
                 break;
             case R.id.bt_right:
@@ -173,8 +186,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     return;
                 }
                 left--;
-                index = currentText.lastIndexOf(lastOperators);
-                sss = currentText.substring(index+1);
+                index = currentText.lastIndexOf(lastOperators);  //在输入右括号时得到右括号前面的数
+                sss = currentText.substring(index+1);          //如果该字符串为“”，计算时会排除
                 infix.add(sss);
                 et_calc.setText(et_calc.getText()+")");
                 infix.add(")");
@@ -194,17 +207,17 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 if ((TextUtils.isEmpty(et_calc.getText()) || lastIsOperator)) {  //文本框非空且上一次输入的不是运算符
                     return;
                 }
-                if(lastOperators.equals("")){
+                if(lastOperators.equals("")){   //运算符为空则得到文本框中的数
                     infix.add(currentText);
-                }else if(!lastOperators.equals(")")){
+                }else if(!lastOperators.equals(")")){  //根据上一次输入的运算符的位置得到当前运算符和上一个运算符之间的数
                     index = currentText.lastIndexOf(lastOperators);
                     sss = currentText.substring(index+1);
                     infix.add(sss);
                 }
-                lastIsOperator=true;
-                et_calc.setText(et_calc.getText() + "/");
-                infix.add("/");
-                lastOperators="/";
+                lastIsOperator=true;  //更新上一次输入的为运算符
+                et_calc.setText(et_calc.getText() + "/");  //文本框显示
+                infix.add("/");  //加入中缀表达式
+                lastOperators="/";  //上一个运算符为除
                 break;
             case R.id.bt_mult:
                 if ((TextUtils.isEmpty(et_calc.getText()) || lastIsOperator)) {
@@ -267,12 +280,13 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 sss = currentText.substring(index+1);
                 infix.add(sss);
                 }
-                toPostfix();
-                double b=toValue();
+                toPostfix(infix);
+                double b=toValue(postfix);
                 et_calc.setText(String.valueOf(b));
                 lastOperators="";
                 lastIsOperator=false;
                 infix.clear();
+                postfix.clear();
                 break;
         }
     }
@@ -321,13 +335,19 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         double value=0;
         switch(oper){
             case "+":
-                value=x+y;
+                value = x + y;
+                BigDecimal b   =   new   BigDecimal(value);
+                value  =  b.setScale(1,   BigDecimal.ROUND_HALF_UP).doubleValue();
                 break;
             case "-":
                 value=x-y;
+                BigDecimal b1   =   new   BigDecimal(value);
+                value  =  b1.setScale(1,   BigDecimal.ROUND_HALF_UP).doubleValue();
                 break;
             case "*":
                 value=x*y;
+                BigDecimal b2   =   new   BigDecimal(value);
+                value  =  b2.setScale(1,   BigDecimal.ROUND_HALF_UP).doubleValue();
                 break;
             case "/":
                 if(y<=0){
@@ -356,7 +376,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         return false;
     }
 	//中缀表达式转后缀表达式
-    private void toPostfix(){  //中缀表达式转后缀表达式
+    private void toPostfix(LinkedList<String> infix){
         Stack<String> st=new Stack<String>();  //创建一个栈用来存运算符
         int i=0;
         while(i<infix.size()){
@@ -396,7 +416,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
     }
     //后缀表达式求值
-    public double toValue(){  //后缀表达式求值
+    public double toValue(LinkedList<String> postfix){
         Stack<Double> st = new Stack<Double>(); //用栈存数
         double value=0;
         System.out.println(postfix.toString());
